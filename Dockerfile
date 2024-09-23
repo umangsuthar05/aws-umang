@@ -1,14 +1,20 @@
-k# Use the official WordPress image
-FROM wordpress:6.6.1
+# Use a lightweight PHP image
+FROM php:8.3-cli
 
-# Install system dependencies and PHP extensions if needed
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     && docker-php-ext-install zip pdo pdo_mysql
 
+# Install Nginx
+RUN apt-get install -y nginx
+
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Create necessary directories for Nginx
+RUN mkdir /run/nginx
 
 # Set the working directory
 WORKDIR /var/www/html
@@ -25,5 +31,6 @@ RUN chown -R www-data:www-data /var/www/html
 # Expose the port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Nginx and PHP-FPM
+CMD service nginx start && php -S 0.0.0.0:80 -t /var/www/html
+
