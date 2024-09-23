@@ -1,8 +1,8 @@
-# Use the official PHP image with Apache
-FROM php:8.3-apache
+# Use the official WordPress image with PHP-FPM
+FROM wordpress:6.6.1-php8.3-fpm-alpine
 
 # Install system dependencies and PHP extensions
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     libzip-dev \
     unzip \
     && docker-php-ext-install zip pdo pdo_mysql
@@ -25,6 +25,6 @@ RUN chown -R www-data:www-data /var/www/html
 # Expose the port
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start PHP-FPM
+CMD ["php-fpm"]
 
