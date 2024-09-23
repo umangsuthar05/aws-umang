@@ -1,14 +1,18 @@
-# Use the official WordPress image with PHP-FPM
-FROM wordpress:6.6.1-php8.3-fpm-alpine
+# Use an official PHP-FPM image
+FROM php:8.3-fpm-alpine
 
 # Install system dependencies and PHP extensions
 RUN apk add --no-cache \
+    nginx \
     libzip-dev \
     unzip \
     && docker-php-ext-install zip pdo pdo_mysql
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/bin --filename=composer
+
+# Copy Nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Set the working directory
 WORKDIR /var/www/html
@@ -19,12 +23,12 @@ COPY . .
 # Install WordPress dependencies
 RUN composer install
 
-# Set file permissions (adjust as needed for your setup)
+# Set file permissions
 RUN chown -R www-data:www-data /var/www/html
 
 # Expose the port
 EXPOSE 80
 
-# Start PHP-FPM
-CMD ["php-fpm"]
+# Start Nginx and PHP-FPM
+CMD ["sh", "-c", "nginx && php-fpm"]
 
