@@ -1,36 +1,40 @@
-# Use a lightweight PHP image
-FROM php:8.3-cli
+# Use the official PHP image with Apache
+FROM php:8.0-apache
 
-# Install system dependencies and PHP extensions
+# Set environment variables
+ENV WORDPRESS_VERSION=6.2.0 \
+    WORDPRESS_DB_HOST=db \
+    WORDPRESS_DB_USER=root \
+    WORDPRESS_DB_PASSWORD=root_password \
+    WORDPRESS_DB_NAME=wordpress
+
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
-    && docker-php-ext-install zip pdo pdo_mysql
+    git \
+    && docker-php-ext-install zip
 
-# Install Nginx
-RUN apt-get install -y nginx
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-# Create necessary directories for Nginx
-RUN mkdir /run/nginx
+# Install Composer globally
+COPY --from=composer:2.3 /usr/bin/composer /usr/bin/composer
 
 # Set the working directory
 WORKDIR /var/www/html
 
-# Copy the WordPress files
+# Download and set up WordPress using Composer
+RUN composer create-project --no-interaction --prefer-dist johnstevenson/wp-composer .
+
+# Copy local WordPress files (if any)
 COPY . .
 
-# Install WordPress dependencies
-RUN composer install
-
-# Set file permissions
+# Set the correct permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Expose the port
+# Expose port 80
 EXPOSE 80
 
-# Start Nginx and PHP-FPM
-CMD service nginx start && php -S 0.0.0.0:80 -t /var/www/html
-
+# Start Apache in the foreground
+CMD ["apache2-foreground"]
