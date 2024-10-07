@@ -1,5 +1,5 @@
 # Use the official PHP image with Apache
-FROM php:7.4-apache
+FROM jkaninda/nginx-php-fpm:8.0
 
 # Install necessary PHP extensions and dependencies
 RUN apt-get update && apt-get install -y \
