@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_mysql zip
 
 # Enable Apache mod_rewrite
-RUN a2enmod rewrite
+#RUN a2enmod rewrite
 
 # Set the working directory
 WORKDIR /var/www/html
@@ -35,5 +35,5 @@ RUN chown -R www-data:www-data /var/www/html
 EXPOSE 80
 
 # Start Apache
-CMD ["apache2-foreground"]
+#CMD ["apache2-foreground"]
 
