@@ -1,5 +1,5 @@
 # Use the official PHP image with Apache
-FROM jkaninda/nginx-php-fpm:8.0
+FROM 715841355495.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
 
 # Install necessary PHP extensions and dependencies
 RUN apt-get update && apt-get install -y \
