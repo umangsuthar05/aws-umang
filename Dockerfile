@@ -1,39 +1,45 @@
-# Use the official PHP image with Apache
-FROM 715841355495.dkr.ecr.us-east-1.amazonaws.com/nginx:latest
+# Use the official PHP image with FPM and Alpine
+FROM php:8.3-fpm-alpine
 
-# Install necessary PHP extensions and dependencies
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
+# Set environment variables
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    PATH="/composer/vendor/bin:$PATH"
+
+# Install necessary PHP extensions and other dependencies
+RUN apk add --no-cache \
+    bash \
+    git \
     unzip \
+    curl \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    icu-dev \
+    libxml2-dev \
+    zip \
+    mariadb-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo pdo_mysql zip
+    && docker-php-ext-install -j$(nproc) gd mysqli pdo pdo_mysql intl opcache soap \
+    && docker-php-ext-enable opcache
 
-# Enable Apache mod_rewrite
-#RUN a2enmod rewrite
+# Install Composer globally
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set the working directory
+# Set working directory
 WORKDIR /var/www/html
 
-# Copy existing application files (if any)
-COPY . .
+# Copy WordPress-specific files
+COPY . /var/www/html/
 
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# Ensure proper permissions for WordPress
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
 
-# Install WordPress using Composer (optional)
-# Uncomment the line below if you want to use Composer to set up WordPress
-# RUN composer create-project --no-interaction --prefer-dist johnstevenson/wp-composer .
+# Install Composer dependencies
+RUN composer install --no-dev --optimize-autoloader
 
-# Set proper permissions (adjust the user and group as necessary)
-RUN chown -R www-data:www-data /var/www/html
+# Expose the default PHP-FPM port
+EXPOSE 9000
 
-# Expose the port Apache is running on
-EXPOSE 80
-
-# Start Apache
-#CMD ["apache2-foreground"]
-
+# Start PHP-FPM
+CMD ["php-fpm"]
